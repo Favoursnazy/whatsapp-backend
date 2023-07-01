@@ -14,7 +14,7 @@ export const populatedMessage = async (id) => {
   let message = await MessageModel.findById(id)
     .populate({
       path: "sender",
-      select: "name, picture",
+      select: "name picture",
       model: "UserModel",
     })
     .populate({

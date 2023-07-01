@@ -9,7 +9,7 @@ export const searchUser = async (req, res, next) => {
       logger.error("plaese add a search string first!");
       throw createHttpError.BadRequest("Oops.. Something went wrong");
     }
-    const users = await searchUserService(search);
+    const users = await searchUserService(search, req.user.userId);
     return res.status(200).json(users);
   } catch (error) {
     next(error);
