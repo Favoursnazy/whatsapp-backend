@@ -26,6 +26,9 @@ const conversationSchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "UserModel",
     },
+    picture: {
+      type: String,
+    },
   },
   {
     collection: "conversations",

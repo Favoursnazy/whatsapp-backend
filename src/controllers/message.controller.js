@@ -9,9 +9,9 @@ import {
 export const sendMessage = async (req, res, next) => {
   try {
     const user_id = req.user.userId;
-    const { message, convo_id, files } = req.body;
+    const { message, convo_id, files, voice } = req.body;
     if (!convo_id || (!message && !files)) {
-      logger.error("Please provide a conversation id and a messge body");
+      logger.error("Please provide a conversation id and a message body");
       return res.sendStatus(400);
     }
     const msgData = {
@@ -19,6 +19,7 @@ export const sendMessage = async (req, res, next) => {
       message,
       conversation: convo_id,
       files: files || [],
+      voice: voice || {},
     };
 
     let newMessage = await createMessage(msgData);

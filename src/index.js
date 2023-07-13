@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { Server } from "socket.io";
+import { PeerServer } from "peer";
 import app from "./app.js";
 import logger from "./configs/logger.config.js";
 import SocketServer from "./SocketServer.js";
@@ -42,8 +43,13 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  logger.info("Socket io connected successfully!");
   SocketServer(socket, io);
+});
+
+// Creating Peer Server
+PeerServer({
+  port: 3001,
+  path: "/",
 });
 
 //handle server errors
@@ -55,10 +61,12 @@ const exitHandler = () => {
     process.exit(1);
   }
 };
+
 const unexpectedErrorHandler = (error) => {
   logger.error(error);
   exitHandler();
 };
+
 process.on("uncaughtException", unexpectedErrorHandler);
 process.on("unhandleRejection", unexpectedErrorHandler);
 
