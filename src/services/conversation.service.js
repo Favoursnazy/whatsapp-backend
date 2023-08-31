@@ -1,5 +1,5 @@
 import createHttpError from "http-errors";
-import { ConversationModel, UserModel } from "../models/index.js";
+import { ConversationModel, MessageModel, UserModel } from "../models/index.js";
 
 export const doesConverstionExist = async (sender_id, reciever_id, isGroup) => {
   if (isGroup === false) {
@@ -77,7 +77,7 @@ export const getUserConversations = async (userId) => {
     .then(async (results) => {
       results = await UserModel.populate(results, {
         path: "latestMessage.sender",
-        select: "name, email, picture status",
+        select: "name, email, picture, status",
       });
       conversation = results;
     })
@@ -97,4 +97,13 @@ export const updateLastestMessage = async (convo_id, msg) => {
     throw createHttpError.BadRequest("Oops... Something went wrong");
 
   return updatedConvo;
+};
+
+export const markMessageAsDelivered = async (convo_id) => {
+  return await MessageModel.updateMany(
+    { conversation: convo_id, status: "sent" },
+    {
+      $set: { status: "read" },
+    }
+  );
 };

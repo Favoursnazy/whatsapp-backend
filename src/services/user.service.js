@@ -19,3 +19,20 @@ export const searchUsers = async (keyword, userId) => {
   });
   return users;
 };
+
+export const getAllUserService = async (userId) => {
+  const users = await UserModel.find({
+    _id: { $ne: userId },
+  });
+
+  const usersGroupedByIntialLetters = {};
+  users.forEach((user) => {
+    const initialLetter = user.name.charAt(0).toUpperCase();
+    if (!usersGroupedByIntialLetters[initialLetter]) {
+      usersGroupedByIntialLetters[initialLetter] = [];
+    }
+    usersGroupedByIntialLetters[initialLetter].push(user);
+  });
+
+  return usersGroupedByIntialLetters;
+};

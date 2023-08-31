@@ -1,5 +1,6 @@
 import logger from "../configs/logger.config.js";
 import jwt from "jsonwebtoken";
+import MessageModel from "../models/message.model.js";
 
 export const sign = (payload, expiresIn, secret) => {
   return new Promise((reslove, reject) => {

@@ -27,6 +27,7 @@ export const populatedMessage = async (id) => {
         model: "UserModel",
       },
     });
+
   if (!message)
     throw createHttpError.BadRequest("Oops... Something went wrong");
 
@@ -41,4 +42,14 @@ export const getConversationMessages = async (convo_id) => {
   if (!messages) throw createHttpError("Oops... Something went wrong ");
 
   return messages;
+};
+
+export const updateTotalUnreadMessage = async (convo_id, user_id) => {
+  const totalUnreadMessage = await MessageModel.find({
+    conversation: convo_id,
+    status: "sent",
+    sender: { $eq: user_id },
+  });
+
+  return totalUnreadMessage.length;
 };

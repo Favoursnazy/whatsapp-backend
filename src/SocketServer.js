@@ -1,4 +1,7 @@
+import { MessageModel } from "./models/index.js";
+import { populatedMessage } from "./services/message.service.js";
 let onlineUsers = [];
+
 const EditData = (data, id, call) => {
   const newData = data.map((item) =>
     item.userId === id ? { ...item, call } : item
@@ -11,10 +14,12 @@ export default function (socket, io) {
   // user joins or open the application
   socket.on("join", (user) => {
     socket.join(user);
+
     //add joined user to oline users
     if (!onlineUsers.some((u) => u.userId === user)) {
       onlineUsers.push({ userId: user, socketId: socket.id });
     }
+
     //send online users to frontend
     io.emit("get-online-users", onlineUsers);
 
@@ -22,7 +27,7 @@ export default function (socket, io) {
     io.emit("setup_socket", socket.id);
   });
 
-  //Socke disconnect
+  //Socket disconnect
   socket.on("disconnect", () => {
     const data = onlineUsers.find((user) => user.socketId === socket.id);
     if (data) {
@@ -38,16 +43,24 @@ export default function (socket, io) {
 
   //join a conversation room
   socket.on("join_conversation", (conversation) => {
-    socket.join(conversation);
+    if (conversation) {
+      socket.join(conversation);
+    } else {
+      return;
+    }
   });
 
   //send and recieve message
   socket.on("send_message", (message) => {
-    let conversation = message.conversation;
+    let conversation = message.message.conversation;
+    let newMessage = message.message;
+    let totalUnreadMessage = message.totalUnreadMessages;
     if (!conversation.users) return;
     conversation.users.forEach((user) => {
-      if (user._id === message.sender._id) return;
-      socket.in(user._id).emit("recieved_message", message);
+      if (user._id === newMessage.sender._id) return;
+      socket
+        .in(user._id)
+        .emit("recieved_message", { newMessage, totalUnreadMessage });
     });
   });
 
@@ -77,11 +90,6 @@ export default function (socket, io) {
     }
   });
 
-  // answer user call
-  socket.on("answer_call", (data) => {
-    io.to(data.to).emit("call_accepted", data.signal);
-  });
-
   // End call
   socket.on("endCall", (data) => {
     const client = onlineUsers.find((user) => user.userId === data.sender);
@@ -99,5 +107,33 @@ export default function (socket, io) {
         onlineUsers = EditData(onlineUsers, client.call, null);
       }
     }
+  });
+
+  // send read to reciepnt
+  socket.on("updateRead", (payload) => {
+    const users = payload.users;
+    if (!users) return;
+    users.forEach((user) => {
+      if (user._id !== payload.latestMessage.sender._id) return;
+      socket.in(user._id).emit("recieved_read", payload);
+    });
+  });
+
+  // listen for update message status
+  socket.on("update_read_message", async (message) => {
+    const messageId = message._id;
+    const newMessage = await MessageModel.findByIdAndUpdate(messageId, {
+      status: "read",
+    });
+    const populatedMsg = await populatedMessage(newMessage._id);
+    const users = populatedMsg.conversation.users;
+    if (!users) return;
+    users.forEach((user) => {
+      if (user._id.toString() === populatedMsg.sender._id.toString()) {
+        socket.in(user._id.toString()).emit("user_read_message", populatedMsg);
+      } else {
+        return;
+      }
+    });
   });
 }

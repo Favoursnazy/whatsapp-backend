@@ -4,20 +4,26 @@ import {
   createConversation,
   doesConverstionExist,
   getUserConversations,
+  markMessageAsDelivered,
   populatedConversation,
 } from "../services/conversation.service.js";
 import { findUser } from "../services/user.service.js";
+import MessageModel from "../models/message.model.js";
 
 export const openConversation = async (req, res, next) => {
   try {
     const sender_id = req.user.userId;
-    const { reciever_id, isGroup } = req.body;
+    const { reciever_id, isGroup, convo_id, unreadMessages } = req.body;
 
     if (isGroup === false) {
       //check if reciever_id is provided
       if (!reciever_id) {
         logger.error("Please provide a user id to start aconversation with");
         throw createHttpError.BadRequest("Something went wrong!");
+      }
+
+      if (convo_id !== false && unreadMessages !== 0) {
+        await markMessageAsDelivered(convo_id);
       }
 
       //check if there is already existed chat with sender_id and reeciever_id
@@ -42,6 +48,7 @@ export const openConversation = async (req, res, next) => {
           "users",
           "-password"
         );
+
         res.status(200).json(populatedConvo);
       }
     } else {
@@ -59,8 +66,21 @@ export const openConversation = async (req, res, next) => {
 export const getConversations = async (req, res, next) => {
   try {
     const user_id = req.user.userId;
-    const conversations = await getUserConversations(user_id);
-    res.status(200).json(conversations);
+    const conversation = await getUserConversations(user_id);
+
+    const filter_unread_messages = await conversation.map(async (convo) => {
+      const countUnreadMessages = await MessageModel.find({
+        conversation: convo._id,
+        status: "sent",
+        sender: { $ne: user_id },
+      });
+      convo.unreadMessages = countUnreadMessages.length;
+      return convo;
+    });
+
+    const userConversations = await Promise.all(filter_unread_messages);
+
+    res.status(200).json(userConversations);
   } catch (error) {
     next(error);
   }

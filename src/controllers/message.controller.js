@@ -4,6 +4,7 @@ import {
   createMessage,
   getConversationMessages,
   populatedMessage,
+  updateTotalUnreadMessage,
 } from "../services/message.service.js";
 
 export const sendMessage = async (req, res, next) => {
@@ -23,9 +24,13 @@ export const sendMessage = async (req, res, next) => {
     };
 
     let newMessage = await createMessage(msgData);
-    let populateMessage = await populatedMessage(newMessage._id);
+    let populateMessage = await populatedMessage(newMessage._id, convo_id);
     await updateLastestMessage(convo_id, newMessage);
-    res.json(populateMessage);
+    const totalUnreadMessages = await updateTotalUnreadMessage(
+      convo_id,
+      user_id
+    );
+    res.json({ message: populateMessage, totalUnreadMessages });
   } catch (error) {
     next(error);
   }

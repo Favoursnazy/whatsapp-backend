@@ -29,6 +29,7 @@ const conversationSchema = mongoose.Schema(
     picture: {
       type: String,
     },
+    unreadMessages: Number,
   },
   {
     collection: "conversations",

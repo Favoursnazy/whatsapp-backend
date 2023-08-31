@@ -45,7 +45,12 @@ app.use(
 );
 
 //cors
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.CLIENT_ENDPOINT,
+    credentials: true,
+  })
+);
 
 //api v1 routes
 app.use("/api/v1", routes);

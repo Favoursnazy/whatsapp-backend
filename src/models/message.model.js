@@ -20,6 +20,10 @@ const messageSchema = mongoose.Schema(
     voice: {
       type: Object,
     },
+    status: {
+      type: String,
+      default: "sent",
+    },
   },
   {
     collection: "messages",
